@@ -1,7 +1,8 @@
 ﻿# Datasets and large files
 data/
 data_subset/
-models/
+models/*
+!models/.gitkeep
 results/
 
 # Python cache
