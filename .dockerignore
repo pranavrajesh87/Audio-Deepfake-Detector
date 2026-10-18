@@ -1,0 +1,33 @@
+# Git & Version Control
+.git/
+.gitignore
+
+# Cache & Temporary Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Datasets & Experimental Output (Do NOT copy into production image)
+data/
+data_subset/
+results/
+*.wav
+*.mp3
+*.m4a
+
+# Virtual environments
+venv/
+.env/
+env/
+
+# Training & Experimental scripts (keep production image lean)
+phase1.py
+phase3_stress_test.py
+create_subset.py
+generate_fakes.py
+convert_m4a_to_wav.py
+test_asvspoof_bonafide.py
+test_clean_only.py
