@@ -14,6 +14,12 @@ MAX_SAMPLES = SAMPLE_RATE * DURATION_SECONDS  # 64,000 samples
 MODEL_PATH = os.getenv("MODEL_PATH", str(BASE_DIR / "models" / "best_model.pt"))
 MODEL_VERSION = "v1"
 
+# Remote release URL to auto-download weights if missing locally or in Docker
+MODEL_DOWNLOAD_URL = os.getenv(
+    "MODEL_DOWNLOAD_URL",
+    "https://github.com/pranavrajesh87/Audio-Deepfake-Detector/releases/download/v1.0.0/best_model.pt"
+)
+
 # Decision Threshold (ASVspoof calibrated)
 # Scores >= THRESHOLD are classified as FAKE, < THRESHOLD as REAL
 DECISION_THRESHOLD = float(os.getenv("DECISION_THRESHOLD", "0.90"))

@@ -1,11 +1,70 @@
 import os
+from pathlib import Path
 from typing import Union, Dict, Any
 import io
+import urllib.request
 import torch
 
-from app.config import MODEL_PATH, DECISION_THRESHOLD, MODEL_VERSION
+from app.config import MODEL_PATH, MODEL_DOWNLOAD_URL, DECISION_THRESHOLD, MODEL_VERSION
 from app.model import Detector
 from app.audio import preprocess_audio
+
+
+def download_weights(destination: str, url: str) -> None:
+    """
+    Downloads model weights from a remote URL to destination with progress display.
+    Streams to a temporary file first to guarantee atomic write and prevent corrupted checkpoints.
+    """
+    dest_path = Path(destination)
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = dest_path.with_suffix(".tmp")
+
+    print(f"\n[Model Checkpoint] Checkpoint not found at: {destination}")
+    print(f"[Model Checkpoint] Auto-downloading weights from release: {url}")
+
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "AudioDeepfakeDetector/1.0"}
+    )
+
+    try:
+        with urllib.request.urlopen(req) as response, open(temp_path, "wb") as out_file:
+            total_size = int(response.headers.get("Content-Length", 0))
+            downloaded = 0
+            chunk_size = 1024 * 1024  # 1 MB chunk
+
+            while True:
+                chunk = response.read(chunk_size)
+                if not chunk:
+                    break
+                out_file.write(chunk)
+                downloaded += len(chunk)
+                if total_size > 0:
+                    percent = (downloaded / total_size) * 100
+                    mb_downloaded = downloaded / (1024 * 1024)
+                    mb_total = total_size / (1024 * 1024)
+                    print(
+                        f"\r[Model Checkpoint] Downloading: {percent:5.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)",
+                        end="",
+                        flush=True,
+                    )
+                else:
+                    mb_downloaded = downloaded / (1024 * 1024)
+                    print(f"\r[Model Checkpoint] Downloading: {mb_downloaded:.1f} MB", end="", flush=True)
+
+        print("\n[Model Checkpoint] Download finished successfully! Finalizing checkpoint...")
+        temp_path.replace(dest_path)
+        print(f"[Model Checkpoint] Saved checkpoint to {dest_path}")
+    except Exception as e:
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+        raise RuntimeError(
+            f"Failed to auto-download model checkpoint from {url}: {e}\n"
+            f"Please download 'best_model.pt' manually and place it at '{destination}'."
+        ) from e
 
 
 class AudioPredictor:
@@ -30,10 +89,7 @@ class AudioPredictor:
     def _load_model(self) -> Detector:
         """Instantiates the architecture and loads trained checkpoint weights."""
         if not os.path.exists(self.model_path):
-            raise FileNotFoundError(
-                f"Model checkpoint not found at: {self.model_path}. "
-                f"Ensure 'models/best_model.pt' exists or set the MODEL_PATH environment variable."
-            )
+            download_weights(self.model_path, MODEL_DOWNLOAD_URL)
 
         model = Detector()
         state_dict = torch.load(self.model_path, map_location=self.device)

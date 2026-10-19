@@ -28,7 +28,7 @@ COPY models/ ./models/
 EXPOSE 8000
 
 # 8. Health check for container orchestrators (AWS / Kubernetes / Docker)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # 9. Launch FastAPI server with Uvicorn
