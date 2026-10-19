@@ -16,7 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 4. Set container working directory
 WORKDIR /app
 
-# 5. Copy and install Python dependencies first (leverages Docker layer caching)
+# 5. Install PyTorch CPU-only first (drops download from 2.5 GB CUDA wheel to ~180 MB)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# 6. Copy and install remaining dependencies (torch is already satisfied)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

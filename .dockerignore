@@ -11,6 +11,8 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Datasets & Experimental Output (Do NOT copy into production image)
+models/*.pt
+models/*.tmp
 data/
 data_subset/
 results/
