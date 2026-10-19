@@ -16,21 +16,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 4. Set container working directory
 WORKDIR /app
 
-# 5. Install PyTorch CPU-only first (drops download from 2.5 GB CUDA wheel to ~180 MB)
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-
-# 6. Copy and install remaining dependencies (torch is already satisfied)
+# 5. Copy and install Python dependencies first (leverages Docker layer caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. Copy application source code and models
+# 6. Copy application source code (models/ dir is intentionally empty in image;
+#    the model weights are auto-downloaded from GitHub Releases on first startup)
 COPY app/ ./app/
 COPY models/ ./models/
 
 # 7. Expose API port
 EXPOSE 8000
 
-# 8. Health check for container orchestrators (AWS / Kubernetes / Docker)
+# 8. Health check for container orchestrators (Docker / AWS / Kubernetes)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 

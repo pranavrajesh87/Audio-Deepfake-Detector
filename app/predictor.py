@@ -92,7 +92,7 @@ class AudioPredictor:
             download_weights(self.model_path, MODEL_DOWNLOAD_URL)
 
         model = Detector()
-        state_dict = torch.load(self.model_path, map_location=self.device)
+        state_dict = torch.load(self.model_path, map_location=self.device, weights_only=True)
         model.load_state_dict(state_dict)
         model.to(self.device)
         model.eval()  # Set to evaluation mode (turns off Dropout)

@@ -33,11 +33,19 @@ app = FastAPI(
 )
 
 
-@app.get("/health", status_code=status.HTTP_200_OK, tags=["Health"])
+@app.get("/health", tags=["Health"])
 async def health_check():
     """
     Health check endpoint for Docker container and AWS health monitoring.
+    Returns 200 only if the model is loaded and ready to serve requests.
+    Returns 503 if the model failed to load at startup.
     """
+    predictor = getattr(app.state, "predictor", None)
+    if predictor is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Model is not loaded. Service is not ready.",
+        )
     return {
         "status": "healthy",
         "service": "audio-deepfake-detector",

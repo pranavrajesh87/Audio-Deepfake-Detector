@@ -2,9 +2,11 @@ import os
 from pathlib import Path
 import pytest
 import torch
+from fastapi.testclient import TestClient
 
 from app.config import MODEL_PATH
 from app.model import Detector
+from app.main import app
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -34,3 +36,14 @@ def ensure_model_checkpoint_exists():
             checkpoint_path.unlink()
         except OSError:
             pass
+
+
+@pytest.fixture(scope="session")
+def client(ensure_model_checkpoint_exists):
+    """
+    Session-scoped TestClient that enters the FastAPI lifespan context.
+    This ensures the model is loaded into app.state.predictor before any
+    test runs, matching real production behaviour exactly.
+    """
+    with TestClient(app) as c:
+        yield c

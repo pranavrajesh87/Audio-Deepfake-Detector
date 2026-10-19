@@ -1,14 +1,9 @@
 import io
 import soundfile as sf
 import numpy as np
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-client = TestClient(app)
 
 
-def test_health_endpoint():
+def test_health_endpoint(client):
     """Test that the /health endpoint responds with 200 and healthy status."""
     response = client.get("/health")
     assert response.status_code == 200
@@ -17,7 +12,7 @@ def test_health_endpoint():
     assert "model_version" in data
 
 
-def test_version_endpoint():
+def test_version_endpoint(client):
     """Test that the /version endpoint returns configuration details."""
     response = client.get("/version")
     assert response.status_code == 200
@@ -27,7 +22,7 @@ def test_version_endpoint():
     assert ".wav" in data["supported_formats"]
 
 
-def test_predict_unsupported_format():
+def test_predict_unsupported_format(client):
     """Test that uploading a non-audio file returns HTTP 400."""
     fake_file = io.BytesIO(b"This is not audio content")
     response = client.post(
@@ -38,7 +33,7 @@ def test_predict_unsupported_format():
     assert "Unsupported file format" in response.json()["detail"]
 
 
-def test_predict_empty_file():
+def test_predict_empty_file(client):
     """Test that uploading an empty audio file returns HTTP 400."""
     empty_file = io.BytesIO(b"")
     response = client.post(
@@ -49,7 +44,7 @@ def test_predict_empty_file():
     assert "Uploaded file is empty" in response.json()["detail"]
 
 
-def test_predict_valid_synthetic_audio():
+def test_predict_valid_synthetic_audio(client):
     """
     Generate a 1-second synthetic 16 kHz sine wave in memory and verify /predict
     returns valid prediction fields without error.
